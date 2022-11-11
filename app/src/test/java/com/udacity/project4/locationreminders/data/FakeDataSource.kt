@@ -8,7 +8,6 @@ import net.bytebuddy.implementation.bytecode.Throw
 //Use FakeDataSource that acts as a test double to the LocalDataSource
 class FakeDataSource(var remindersList: MutableList<ReminderDTO>? = mutableListOf()) : ReminderDataSource {
 
-
     private var shouldReturnError = false
 
 

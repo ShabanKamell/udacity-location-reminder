@@ -9,15 +9,12 @@ import com.udacity.project4.locationreminders.data.FakeDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.getOrAwaitValue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.pauseDispatcher
+import kotlinx.coroutines.test.resumeDispatcher
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.runner.RunWith
-import org.hamcrest.core.IsNot
 import org.junit.*
+import org.junit.runner.RunWith
 import org.koin.core.context.stopKoin
-import org.hamcrest.CoreMatchers.`is`
-import org.junit.After
-import org.junit.Rule
-import org.junit.Test
 
 @RunWith(AndroidJUnit4::class)
 @ExperimentalCoroutinesApi
@@ -38,7 +35,8 @@ class RemindersListViewModelTest {
     @Before
     fun setupViewModel() {
         remindersRepository = FakeDataSource()
-        viewModel = RemindersListViewModel(ApplicationProvider.getApplicationContext(), remindersRepository)
+        viewModel =
+            RemindersListViewModel(ApplicationProvider.getApplicationContext(), remindersRepository)
     }
 
     @After
@@ -61,7 +59,7 @@ class RemindersListViewModelTest {
     }
 
     @Test
-    fun loadReminders_remainderListNotEmpty() = mainCoroutineRule.runBlockingTest  {
+    fun loadReminders_remainderListNotEmpty() = mainCoroutineRule.runBlockingTest {
         val reminder = ReminderDTO("My Store", "Pick Stuff", "Abuja", 6.454202, 7.599545)
 
         remindersRepository.saveReminder(reminder)
