@@ -3,10 +3,13 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.location.Location
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,6 +35,7 @@ import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 import java.util.*
 
+
 private const val DEFAULT_ZOOM_LEVEL = 15f
 
 class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
@@ -40,7 +44,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             val granted = permissions.entries.all {
                 it.value
             }
-            if (granted) {
+            if (!granted) {
                 showRationale()
             }
         }
@@ -60,7 +64,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding =
             DataBindingUtil.inflate(inflater, R.layout.fragment_select_location, container, false)
 
@@ -71,8 +75,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         setDisplayHomeAsUpEnabled(true)
 
 
-        val mapFragment = childFragmentManager
-            .findFragmentById(R.id.mapFragment) as SupportMapFragment
+        val mapFragment =
+            childFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
         return binding.root
@@ -136,52 +140,52 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
 
     private fun isPermissionGranted(): Boolean {
         return ContextCompat.checkSelfPermission(
-            requireActivity(),
-            Manifest.permission.ACCESS_FINE_LOCATION
+            requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    private val shouldShowRequestPermissionRationale: Boolean
+        get() {
+            return ActivityCompat.shouldShowRequestPermissionRationale(
+                requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        }
+
+    private val permissions = arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION
+    )
+
     @SuppressLint("MissingPermission")
     private fun requestLocationPermission() {
-        val permissions = arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
+
         if (hasPermissions(requireContext(), permissions)) {
             map.isMyLocationEnabled = true
             return
         }
-        permissionLauncher.launch(permissions)
+        if (!shouldShowRequestPermissionRationale) {
+            permissionLauncher.launch(permissions)
+            return
+        }
+        showRationale()
     }
 
     private fun showRationale() {
-        if (
-            ActivityCompat.shouldShowRequestPermissionRationale(
-                requireActivity(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-        ) {
-            AlertDialog.Builder(requireActivity())
-                .setTitle(R.string.location_permission)
-                .setMessage(R.string.permission_denied_explanation)
-                .setPositiveButton("OK") { _, _ ->
-                    requestLocationPermission()
-                }
-                .create()
-                .show()
-
-        } else {
-            requestLocationPermission()
-        }
+        AlertDialog.Builder(requireActivity()).setTitle(R.string.location_permission)
+            .setMessage(R.string.permission_denied_explanation)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                val uri: Uri = Uri.fromParts("package", requireContext().packageName, null)
+                intent.data = uri
+                startActivity(intent)
+            }.create().show()
     }
 
     private fun setPoiClick(map: GoogleMap) {
         map.setOnPoiClickListener { poi ->
             map.clear()
             marker = map.addMarker(
-                MarkerOptions()
-                    .position(poi.latLng)
-                    .title(poi.name)
+                MarkerOptions().position(poi.latLng).title(poi.name)
             )
             marker?.showInfoWindow()
 
@@ -195,16 +199,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             // A Snippet is Additional text that's displayed below the title.
 
             val snippet = String.format(
-                Locale.getDefault(),
-                "Lat: %1$.5f, Long: %2$.5f",
-                latLng.latitude,
-                latLng.longitude
+                Locale.getDefault(), "Lat: %1$.5f, Long: %2$.5f", latLng.latitude, latLng.longitude
             )
             map.clear()
             marker = map.addMarker(
-                MarkerOptions()
-                    .position(latLng)
-                    .title(getString(R.string.dropped_pin))
+                MarkerOptions().position(latLng).title(getString(R.string.dropped_pin))
                     .snippet(snippet)
             )
 
@@ -217,14 +216,12 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     private fun getUserLocation() {
         map.isMyLocationEnabled = true
         Log.d("MapsActivity", "getLastLocation Called")
-        fusedLocationProviderClient.lastLocation
-            .addOnSuccessListener { location: Location? ->
+        fusedLocationProviderClient.lastLocation.addOnSuccessListener { location: Location? ->
                 location?.let {
                     val userLocation = LatLng(location.latitude, location.longitude)
                     map.moveCamera(
                         CameraUpdateFactory.newLatLngZoom(
-                            userLocation,
-                            DEFAULT_ZOOM_LEVEL
+                            userLocation, DEFAULT_ZOOM_LEVEL
                         )
                     )
                     marker = map.addMarker(
@@ -242,8 +239,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             // in a raw resource file.
             val success = map.setMapStyle(
                 MapStyleOptions.loadRawResourceStyle(
-                    requireContext(),
-                    R.raw.map_style
+                    requireContext(), R.raw.map_style
                 )
             )
             if (!success) {
