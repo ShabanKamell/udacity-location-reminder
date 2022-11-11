@@ -14,6 +14,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.R
 import com.udacity.project4.databinding.ActivityAuthenticationBinding
 import com.udacity.project4.locationreminders.RemindersActivity
+import com.udacity.project4.shared.pref.SharedPref
 
 /**
  * This class should be the starting point of the app, It asks the users to sign in / register, and redirects the
@@ -40,11 +41,13 @@ class AuthenticationActivity : AppCompatActivity() {
                 "Successfully signed in user ${FirebaseAuth.getInstance().currentUser?.displayName}!"
             )
             Toast.makeText(this, "Successfully signed in", Toast.LENGTH_SHORT).show()
+            SharedPref.instance.isLoggedIn = true
             startReminderActivity()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        handleAuthenticationFlow()
         binding = DataBindingUtil.setContentView(
             this,
             R.layout.activity_authentication
@@ -55,6 +58,13 @@ class AuthenticationActivity : AppCompatActivity() {
         binding.signInButton.setOnClickListener {
             launchSignInFlow()
         }
+    }
+
+    private fun handleAuthenticationFlow() {
+        if (!SharedPref.instance.isLoggedIn) {
+            return
+        }
+        startReminderActivity()
     }
 
     private fun launchSignInFlow() {

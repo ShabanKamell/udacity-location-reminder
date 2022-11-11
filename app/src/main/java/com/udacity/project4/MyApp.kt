@@ -1,6 +1,8 @@
 package com.udacity.project4
 
+import android.annotation.SuppressLint
 import android.app.Application
+import android.content.Context
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
@@ -15,6 +17,7 @@ class MyApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        context = this
 
         /**
          * use Koin Library as a service locator
@@ -41,5 +44,10 @@ class MyApp : Application() {
             androidContext(this@MyApp)
             modules(listOf(myModule))
         }
+    }
+
+    companion object {
+        @SuppressLint("StaticFieldLeak")
+        lateinit var context: Context
     }
 }
