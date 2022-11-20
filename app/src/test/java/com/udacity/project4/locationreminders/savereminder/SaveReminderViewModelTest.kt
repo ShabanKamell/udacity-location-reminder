@@ -75,7 +75,4 @@ class SaveReminderViewModelTest {
         assertThat(viewModel.showLoading.getOrAwaitValue()).isFalse()
     }
 
-
-
-
 }
