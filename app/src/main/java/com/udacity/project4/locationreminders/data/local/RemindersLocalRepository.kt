@@ -55,18 +55,13 @@ class RemindersLocalRepository(
      */
     override suspend fun getReminder(id: String): Result<ReminderDTO> = withContext(ioDispatcher) {
         wrapEspressoIdlingResource {
-            try {
-                val reminder = remindersDao.getReminderById(id)
-                if (reminder != null) {
-                    return@withContext Result.Success(reminder)
-                } else {
-                    return@withContext Result.Error("Reminder not found!")
-                }
-            } catch (e: Exception) {
-                return@withContext Result.Error(e.localizedMessage)
+            val reminder = remindersDao.getReminderById(id)
+            if (reminder != null) {
+                return@withContext Result.Success(reminder)
+            } else {
+                return@withContext Result.Error("Reminder not found!")
             }
         }
-
     }
 
     /**
